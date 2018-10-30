@@ -1,0 +1,281 @@
+---
+title: "Stats 517 Project continued"
+author: "Abhinav"
+date: "October 6, 2018"
+output:
+  pdf_document: default
+  word_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+This question focuses on mitochondria data extracted from the 1000 Genome Project dataset; a repository of 1024 individuals' genetic information displayed in terms of S "mutations".
+
+
+`
+```{r}
+
+```
+
+
+```{r}
+library(dendroextras)
+library(dendextend)
+library(cluster)
+library(tidyverse)
+library(circlize)
+library(mclust)
+library(factoextra)
+library(NbClust)
+library(fpc)
+library(dbscan)
+library(dplyr)
+
+```
+
+
+
+```{r}
+mitcria = read.csv("https://raw.githubusercontent.com/sauchilee/Stat517/master/Data/Mt1t.mutate.csv")
+mitcria<-mitcria[-c(1:3),]
+dim(mitcria)
+
+#Imputation - This the process in which we fill the missing values in the dataset with random 0s and 1s based on the maximum count (Median).
+
+for (i in 2:ncol(mitcria)){
+  mitcria[is.na(mitcria[,i]),i]<-median(mitcria[,i],na.rm = TRUE)
+}
+
+#If the columns has only 0s or only 1s, then there will not be any normal distribution curve or the variance will not be there. Hence we need to remove these columns.
+mit=as.matrix(sapply(mitcria[-1],as.numeric))
+mit1<-as.data.frame(mit[,apply(mit,2,var,na.rm=TRUE) !=0])
+mit1=cbind(mitcria$Group,mit)
+colnames(mit1)[1]<-"Group"
+dim(mit1)
+
+
+```
+
+
+```{r}
+#Principal Component Analysis
+par(mfrow=c(1,2))
+mitcria.s = scale(mit1)
+mitcria.pca=prcomp(mit1[,-1],scale=FALSE)
+mitcria.pca$rotation[1:5,1:5]
+
+```
+
+
+```{r}
+mitcria.sd=mitcria.pca$sdev
+mitcria.var=mitcria.pca$sdev^2
+mitcria.var[1:10]
+```
+
+
+```{r}
+propvar=mitcria.var/sum(mitcria.var)
+which.max(cumsum(propvar)[cumsum(propvar)<0.95])
+which.max(cumsum(propvar)[cumsum(propvar)<0.98])
+
+```
+It is clear that the first 100 components accounts for more than 80% of the overall variance. Hence, they are considered as new variables.
+
+
+
+```{r}
+#Clustering Methods
+
+cumsum(propvar[100])
+fviz_screeplot(mitcria.pca,ncp=100,choice="eigenvalue")
+
+```
+
+
+
+```{r}
+
+plot(cumsum(propvar),xlab="Principal Component", ylab="Cumulative Proportion of variance",ylim=c(0,1),type='b')
+
+```
+
+
+
+```{r}
+biplot(mitcria.pca,arrow.len=0)
+```
+
+
+```{r}
+mitcriaClasses<- factor(mitcria$Group)
+plot(main="Different Groups",mitcria.pca$x[,1:100],col=mitcriaClasses)
+
+```
+
+
+
+```{r}
+mitcria_new=mitcria.pca$x[,1:100]
+mitcria_new.s=scale(mitcria_new)
+set.seed(10)
+fviz_nbclust(mitcria_new,kmeans,method = "wss")
+fviz_nbclust(mitcria_new,kmeans,method="gap_stat")
+fviz_nbclust(mitcria_new,kmeans,method="silhouette")
+
+
+```
+
+
+
+```{r}
+
+mitcria.nbclust<-mitcria_new %>%
+  scale() %>%
+  NbClust(distance = "euclidean",min.nc = 2,max.nc = 8,method = "complete",index = "all")
+
+```
+
+
+```{r}
+propvar=mitcria.var/sum(mitcria.var)
+cumsum(propvar[200])
+fviz_screeplot(mitcria.pca,ncp=200,choice="eigenvalue")
+
+```
+
+
+
+```{r}
+plot(cumsum(propvar),xlab="Principal Component", ylab = "Cumulative Proportion", ylim = c(0,1),type='b')
+biplot(mitcria.pca,arrow.len=0)
+
+```
+
+
+```{r}
+mitcriaClasses1<-factor(mitcria$Group)
+plot(main="Different Groups", mitcria.pca$x[,1:200],col=mitcriaClasses1)
+mitcria_new1=mitcria.pca$x[,1:200]
+mitcria_new1.s=scale(mitcria_new)
+set.seed(11)
+fviz_nbclust(mitcria_new1,kmeans,method="wss")
+fviz_nbclust(mitcria_new1,kmeans,method="gap_stat")
+fviz_nbclust(mitcria_new1,kmeans,method="silhouette")
+mitcria.nbclust<-mitcria_new1 %>%
+  scale() %>%
+  
+
+```
+The optimal number of clusters for Elbow method, Silhouette method, Gap stat method and NbClust methods are 8, 2, 8 and 2 respectively. 
+
+
+```{r}
+#Fuzzy K-Means
+
+set.seed(10)
+km_100_2.fit=kmeans(mitcria_new,2,nstart=50)
+attributes(km_100_2.fit)
+plotcluster(mitcria_new,km_100_2.fit$cluster)
+fviz_cluster(km_100_2.fit,data=mitcria_new,ellipse.type="convex",palette="futuruma",ggtheme=theme_minimal())
+
+
+```
+
+
+
+
+```{r}
+set.seed(5)
+km_100_8.fit=kmeans(mitcria_new,8,nstart=50)
+attributes(km_100_8.fit)
+km_100_8.fit$size
+km_100_8.fit$tot.withinss
+plotcluster(mitcria_new,km_100_8.fit$cluster)
+fviz_cluster(km_100_8.fit,data=mitcria_new,ellipse.type="convex",palette="futurma",ggtheme=theme_minimal())
+
+```
+
+
+
+```{r}
+set.seed(9)
+km_200_2.fit=kmeans(mitcria_new1,2,nstart=50)
+attributes(km_100_2.fit)
+km_200_2.fit$size
+km_200_2.fit$tot.withinss
+plotcluster(mitcria_new1,km_200_2.fit$cluster)
+fviz_cluster(km_200_2.fit,data=mitcria_new1,ellipse.type="convex",palette="futurma",ggtheme=theme_minimal())
+
+
+```
+
+
+
+```{r}
+set.seed(8)
+km_200_6.fit=kmeans(mitcria_new1,6,nstart=50)
+attributes(km_200_6.fit)
+km_200_6.fit$size
+km_200_6.fit$tot.withinss
+plotcluster(mitcria_new1,km_200_6.fit$cluster)
+fviz_cluster(km_200_6.fit,data=mitcria_new1,ellipse.type="convex",palette="futurma",ggtheme=theme_minimal())
+
+
+```
+
+From the K means method, it is evident that K = 8 is the optimal clustering.
+
+
+```{r}
+#Hierarchial Clustering
+
+par(mfrow=c(1,2))
+
+mitcria.hc.ward=hclust(dist(mitcria_new,method="euclidean"),method="ward.D2")
+
+plot(mitcria.hc.ward, main="Complete Linkage",xlab="",cex=.9)
+
+rect.hclust(mitcria.hc.ward,k=2,border="blue")
+
+mitcria.hc.ward=hclust(dist(mitcria_new,method="euclidean"),method="ward.D2")
+
+plot(mitcria.hc.ward, main="Complete Linkage",xlab="",cex=.9)
+
+rect.hclust(mitcria.hc.ward,k=8,border="green")
+
+groups2=cutree(mitcria.hc.ward,2)
+
+clusplot(mitcria_new,groups2,color=TRUE, shade = TRUE, labels=2, lines=0, main='Group segments')
+
+groups8=cutree(mitcria.hc.ward,8)
+
+clusplot(mitcria_new,groups8,color=TRUE, shade = TRUE, labels=2, lines=0, main='Group segments')
+
+plotcluster(mitcria_new, groups2)
+plotcluster(mitcria_new,groups8)
+
+```
+
+In Hierarchical clustering, both clusters 2 and 8 show similar results.
+
+```{r}
+#Model Based Clustering
+par(mfrow=c(1,3))
+mitcria.fit<-Mclust(mitcria_new.s[,0:50])
+summary(mitcria.fit); mitcria.fit$modelName ; mitcria.fit$G
+fviz_mclust(mitcria.fit,"BIC",palette="jco")
+fviz_mclust(mitcria.fit,"classification",geom="point",pointsize=1.5, palette="jco")
+fviz_mclust(mitcria.fit,"uncertainty", palette="jco")
+
+par(mfrow=c(1,3))
+mitcria.fit1<-Mclust(mitcria_new1.s[,0:50])
+summary(mitcria.fit1); mitcria.fit1$modelName ; mito.fit1$G
+fviz_mclust(mitcria.fit1,"BIC",palette="jco")
+fviz_mclust(mitcria.fit1,"classification",geom="point",pointsize=1.5, palette="jco")
+fviz_mclust(mitcria.fit1,"uncertainty", palette="jco")
+```
+
+From the Model based clustering, it is evident that K = 9 is the optimal clustering.
