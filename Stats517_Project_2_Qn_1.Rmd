@@ -1,0 +1,210 @@
+---
+title: "Stat517_project_2"
+author: "Abhinav"
+date: "September 29, 2018"
+output:
+  html_document:
+    df_print: paged
+  pdf_document: default
+  word_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+library(dendroextras)
+library(dendextend) 
+library(cluster)
+library(circlize) 
+library(mclust)
+library(factoextra) 
+library(MVA) 
+library(NbClust) 
+library(seriation)
+
+```
+
+
+
+For the year 2015
+
+```{r}
+happy1 = read.csv("https://raw.githubusercontent.com/sauchilee/Stat517/master/Data/World_Happiness_2015.csv")
+dim(happy1)
+happy1dup<-happy1[,c(2,6:12)]
+happy1dup.s = scale(happy1dup[,-1])
+#happy1.s
+happy1dup.d = dist(happy1dup.s)
+#happy1.d
+happy1dup.hc.s = hclust(happy1dup.d,method="average")
+plot(happy1dup.hc.s)
+dend=as.dendrogram(happy1dup.hc.s)
+#labels_colors(dend)=as.numeric(as.factor(happy1dup$Region[happy1dup.hc.s$order]))
+plot(dend)
+```
+Partition Clustering
+```{r}
+set.seed(150)
+fviz_nbclust(happy1dup.s,kmeans,method="silhouette")
+fviz_nbclust(happy1dup.s,kmeans,method="gap_stat")
+happy1dup.k2<-kmeans(happy1dup.s,centers = 2,iter.max=100,nstart=25)
+happy1dup.k4<-kmeans(happy1dup.s,centers = 4,iter.max=100,nstart=25)
+pairs(happy1dup[-1],pch=happy1dup.k2$cluster,col=unclass(happy1dup[,1]))
+fviz_cluster(happy1dup.k2,data=happy1dup.s,ellipse.type ="convex",palette="jco",repel = TRUE, ggtheme = theme_minimal())
+fviz_cluster(happy1dup.k4,data=happy1dup.s,ellipse.type ="convex",palette="jco",repel = TRUE, ggtheme = theme_minimal())
+
+
+
+```
+It is observed that most of the Europian countries are clustered in blue and the African countries are clustered in yellow regions.
+
+M Clust:
+
+```{r}
+happy1dup.mclust<-Mclust(happy1dup.s)
+summary(happy1dup.mclust)
+fviz_mclust(happy1dup.mclust,"BIC",palette="jco") 
+```
+
+
+For the year 2016
+
+
+```{r}
+happy2=read.csv("https://raw.githubusercontent.com/sauchilee/Stat517/master/Data/World_Happiness_2016.csv")
+dim(happy2)
+happy2dup<-happy2[,c(2,7:13)]
+happy2dup.s = scale(happy2dup[,-1])
+#happy1.s
+happy2dup.d = dist(happy2dup.s)
+#happy1.d
+happy2dup.hc.s = hclust(happy2dup.d,method="average")
+plot(happy2dup.hc.s)
+dend=as.dendrogram(happy2dup.hc.s)
+#labels_colors(dend)=as.numeric(as.factor(happy2dup$Region[happy2dup.hc.s$order]))
+plot(dend)
+```
+
+```{r}
+set.seed(150)
+fviz_nbclust(happy2dup.s,kmeans,method="silhouette")
+fviz_nbclust(happy2dup.s,kmeans,method="gap_stat")
+happy2dup.k2<-kmeans(happy2dup.s,centers = 4,iter.max=100,nstart=25)
+happy2dup.k4<-kmeans(happy2dup.s,centers = 2,iter.max=100,nstart=25)
+pairs(happy2dup[-1],pch=happy2dup.k2$cluster,col=unclass(happy2dup[,1]))
+fviz_cluster(happy2dup.k2,data=happy2dup.s,ellipse.type ="convex",palette="jco",repel = TRUE, ggtheme = theme_minimal())
+fviz_cluster(happy2dup.k4,data=happy2dup.s,ellipse.type ="convex",palette="jco",repel = TRUE, ggtheme = theme_minimal())
+```
+It is observed that most of the African countries are clustered in black region.
+
+M Clust:
+
+```{r}
+happy2dup.mclust<-Mclust(happy2dup.s)
+summary(happy2dup.mclust)
+fviz_mclust(happy2dup.mclust,"BIC",palette="jco") 
+```
+
+
+
+For the year 2017
+```{r}
+happy3=read.csv("https://raw.githubusercontent.com/sauchilee/Stat517/master/Data/World_Happiness_2017.csv")
+dim(happy3)
+happy3dup<-happy3[,c(2,6:12)]
+happy3dup.s = scale(happy3dup[,-1])
+#happy1.s
+happy3dup.d = dist(happy3dup.s)
+#happy1.d
+happy3dup.hc.s = hclust(happy3dup.d,method="average")
+plot(happy3dup.hc.s)
+dend=as.dendrogram(happy3dup.hc.s)
+#labels_colors(dend)=as.numeric(as.factor(happy2dup$Region[happy2dup.hc.s$order]))
+plot(dend)
+```
+
+```{r}
+set.seed(150)
+fviz_nbclust(happy3dup.s,kmeans,method="silhouette")
+fviz_nbclust(happy3dup.s,kmeans,method="gap_stat")
+happy3dup.k2<-kmeans(happy3dup.s,centers = 3,iter.max=100,nstart=25)
+happy3dup.k4<-kmeans(happy3dup.s,centers = 3,iter.max=100,nstart=25)
+pairs(happy3dup[-1],pch=happy3dup.k2$cluster,col=unclass(happy3dup[,1]))
+fviz_cluster(happy3dup.k2,data=happy3dup.s,ellipse.type ="convex",palette="jco",repel = TRUE, ggtheme = theme_minimal())
+fviz_cluster(happy3dup.k4,data=happy3dup.s,ellipse.type ="convex",palette="jco",repel = TRUE, ggtheme = theme_minimal())
+```
+
+
+M Clust
+
+```{r}
+happy3dup.mclust<-Mclust(happy3dup.s)
+summary(happy3dup.mclust)
+fviz_mclust(happy3dup.mclust,"BIC",palette="jco") 
+```
+
+
+```{r pressure, echo=FALSE}
+set.seed(50)
+new_2015<-as.matrix(happy1dup)
+new1_2015<-new_2015[sample(seq_len(nrow(new_2015))),]
+dis_2015<-dist(new1_2015)
+ord_2015<-seriate(dis_2015,method="OLO")
+pimage(dis_2015,main="original")
+pimage(dis_2015,ord_2015,main="ordered")
+get_order(ord_2015)
+```
+
+
+```{r}
+data("happy2dup")
+new_2016<-as.matrix(happy2dup)
+new1_2016<-new_2016[sample(seq_len(nrow(new_2016))),]
+dis_2016<-dist(new1_2016)
+ord_2016<-seriate(dis_2016,method="OLO")
+pimage(dis_2016,main="original")
+pimage(dis_2016,ord_2016,main="ordered")
+get_order(ord_2016)
+```
+
+```{r}
+data("happy3dup")
+new_2017<-as.matrix(happy3dup)
+new1_2017<-new_2017[sample(seq_len(nrow(new_2017))),]
+dis_2017<-dist(new1_2017)
+ord_2017<-seriate(dis_2017,method="OLO")
+pimage(dis_2017,main="original")
+pimage(dis_2017,ord_2017,main="ordered")
+get_order(ord_2017)
+```
+
+
+1) Norway tops the global happiness rankings for all three years 2015, 2016, and 2017
+Everytime when the seration analysis is done, the outcome changes randomly. I don't feel that Norway tops the global happiness for all the three years.
+
+ 2) All top ten countries rank highly on all the main features found to support happiness
+ I don't think that the top 10 countries rank on the main features for happiness. 
+ 
+ 3) Happiness is both social and personal
+ I don't think that the happiness is based on both the social and personal. Few countries have good happiness rate for family but poor happiness rate for corruption, but still the countries ranks in the top.
+ 
+ 
+ 4) Unemployment causes a major fall in happiness, and even for those in work the quality of work can cause major variations in happiness
+ Even though there isn't any variable to decide directly about the unemployment, the family's happiness is comparatively less in many countries. The major reason for this could be unemployment and poverty.
+ 
+ 5) China are no happier than most countries, though richer and longer longevity
+
+Based on Cluster analysis, I believe that China is happier country.
+
+ 6) Much of Africa is struggling
+
+While doing the analysis, I found that most of the African countries fell into a single cluster and were grouped together. Morevover, the happiness rank is less for the African countries. Hence, I think that Africa is struggling.
+
+7) Happiness has fallen in America
+
+From the analysis, I understood that happiness is bit stable in America. It hasn't risen or fallen much from 2015-2017.
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
