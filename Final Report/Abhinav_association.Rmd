@@ -1,0 +1,48 @@
+---
+title: "Final_57_stats_Abhinav"
+author: "Abhinav Prabhu Adarapuram"
+date: "December 9, 2018"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(arules);library(arulesViz); library(arulesCBA);library(dplyr)
+library(plyr)
+
+```
+
+```{r}
+decade1 = read.csv("https://raw.githubusercontent.com/abhinav12347/stat-517/master/Stats_Final_Project_517_Updated_Abhinav.csv")
+```
+
+
+```{r}
+decade1.arules<-decade1[,-c(1,2)]
+dim(decade1.arules)
+decade1.arules$winner_hand[decade1.arules$winner_hand==2] <- 1
+decade1.arules$loser_hand=revalue(decade1.arules$loser_hand,c("R" = "1"))
+decade1.arules$loser_hand=revalue(decade1.arules$loser_hand,c("L" = "0"))
+
+```
+
+
+```{r}
+decade1.arules[,names(decade1.arules)]<-lapply(decade1.arules[,names(decade1.arules)],factor)
+decade1.arules<-as(decade1.arules,"transactions")
+itemFrequencyPlot(decade1.arules[, itemFrequency(decade1.arules) > 0.5], cex.names = 0.6)
+
+rules1 <- apriori(data = decade1.arules , parameter = list( supp = 0.001 , conf = 0.7) , appearance = list(default = "lhs" , rhs = "winner_ioc=IND") )
+
+rules1<-sort(rules1 , decreasing = TRUE , by = 'lift')
+
+inspect(rules1[1:10])
+
+```
+
+```{r}
+
+
